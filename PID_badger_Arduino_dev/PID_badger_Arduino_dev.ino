@@ -63,7 +63,7 @@ void setup()
 void loop()
 {
   //pid-related code
-  Input = analogRead(inputPin);
+  Input = (4 + ((analogRead(inputPin))/170.67));
   myPID.Compute();
 
    if(millis() - windowStartTime > WindowSize)
