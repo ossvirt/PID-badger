@@ -27,8 +27,8 @@ int windowHeight = 600;     // form
 
 float InScaleMin = 4;       // set the Y-Axis Min
 float InScaleMax = 10;    // and Max for both
-float OutScaleMin = 0;      // the top and
-float OutScaleMax = 255;    // bottom trends
+float OutScaleMin = -127;      // the top and
+float OutScaleMax = 128;    // bottom trends
 
 
 int windowSpan = 300000;    // number of mS into the past you want to display
