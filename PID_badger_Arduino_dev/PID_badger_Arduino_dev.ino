@@ -42,8 +42,8 @@ void setup()
   Serial.begin(9600);
 
   //initialize the variables we're linked to
-  Input = analogRead(inputPin);
-  Setpoint = 512;
+  Input = (4 + ((analogRead(inputPin))/170.67));
+  Setpoint = 7;
 
   //tell the PID to range between 0 and the full window size
   myPID.SetOutputLimits(0, WindowSize);
