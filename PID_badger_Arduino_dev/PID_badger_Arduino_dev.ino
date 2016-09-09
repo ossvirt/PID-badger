@@ -12,7 +12,7 @@
 #define pHdownPin 3
 
 //Define Variables we'll be connecting to
-double Setpoint, Input, Output, SendOutput;
+double Setpoint, Input, Output, SendOutput, InputSend, SetpointSend;
 int inputPin=A0, RelayPin;
 
 double Dissolved_Oxygen = 5.7;
@@ -42,11 +42,13 @@ void setup()
   Serial.begin(9600);
 
   //initialize the variables we're linked to
-  Input = (4 + ((analogRead(inputPin))/170.67));
-  Setpoint = 7;
+  Input = analogRead(inputPin);
+  InputSend = (4 + ((analogRead(inputPin))/170.67));
+  Setpoint = 512;
+  SetpointSend = 7;
 
   //tell the PID to range between 0 and the full window size
-  myPID.SetOutputLimits(0, WindowSize);
+  myPID.SetOutputLimits(-127, 128);
 
   //turn the PID on
   myPID.SetMode(AUTOMATIC);
@@ -63,7 +65,8 @@ void setup()
 void loop()
 {
   //pid-related code
-  Input = (4 + ((analogRead(inputPin))/170.67));
+  Input = analogRead(inputPin);
+  InputSend = (4 + ((analogRead(inputPin))/170.67));
   myPID.Compute();
 
    if(millis() - windowStartTime > WindowSize)
@@ -138,7 +141,8 @@ void SerialReceive()
   }
   if(index==16){
     double p, i, d;                       // * read in and set the controller tunings
-    Setpoint = double(foo.asFloat[0]);           //
+    SetpointSend = double(foo.asFloat[0]);           //
+    Setpoint = (SetpointSend - 4)*170.66;
     p = double(foo.asFloat[1]);           //
     i = double(foo.asFloat[2]);           //
     d = double(foo.asFloat[3]);           //
@@ -156,9 +160,9 @@ void SerialSend()
   Serial.print(timeFrame);
   Serial.print(" ");
   Serial.print("PID ");
-  Serial.print(Setpoint);
+  Serial.print(SetpointSend);
   Serial.print(" ");
-  Serial.print(Input);
+  Serial.print(InputSend);
   Serial.print(" ");
   Serial.print(Output);
   Serial.print(" ");
