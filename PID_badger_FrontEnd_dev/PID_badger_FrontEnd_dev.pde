@@ -22,13 +22,13 @@ import controlP5.*;
 /***********************************************
  * User spcification section
  **********************************************/
-int windowWidth = 1024;      // set the size of the
+int windowWidth = 900;      // set the size of the
 int windowHeight = 600;     // form
 
-float InScaleMin = 0;       // set the Y-Axis Min
-float InScaleMax = 1024;    // and Max for both
-float OutScaleMin = -128;      // the top and
-float OutScaleMax = 128;    // bottom trends
+float InScaleMin = 4;       // set the Y-Axis Min
+float InScaleMax = 10;    // and Max for both
+float OutScaleMin = 0;      // the top and
+float OutScaleMax = 255;    // bottom trends
 
 
 int windowSpan = 300000;    // number of mS into the past you want to display
@@ -57,7 +57,7 @@ float inputHeight = (windowHeight-70)*2/3;
 float outputTop = inputHeight+50;
 float outputHeight = (windowHeight-70)*1/3;
 
-float ioLeft = 150, ioWidth = windowWidth-ioLeft-50;
+float ioLeft = 160, ioWidth = windowWidth-ioLeft-50;
 float ioRight = ioLeft+ioWidth;
 float pointWidth= (ioWidth)/float(arrayLength-1);
 
@@ -73,12 +73,10 @@ boolean justSent = true;
 Serial myPort;
 
 ControlP5 controlP5;
-controlP5.Button AMButton, DRButton;
-controlP5.Textlabel AMLabel, AMCurrent, InLabel,
-OutLabel, SPLabel, PLabel,
-ILabel, DLabel,DRLabel, DRCurrent;
-controlP5.Textfield SPField, InField, OutField,
-PField, IField, DField;
+controlP5.Button Submit;
+controlP5.Textlabel InLabel, OutLabel, TempLabel, DissOxLabel, OxLabel, CO2Label, SPLabel, PLabel, ILabel, DLabel;
+controlP5.Textlabel InTextLabel, OutTextLabel, TempTextLabel, DissOxTextLabel, OxTextLabel, CO2TextLabel, HeadingLabel;
+controlP5.Textfield SPField, PField, IField, DField;
 
 PrintWriter output;
 PFont AxisFont, TitleFont;
@@ -88,30 +86,39 @@ void setup()
   frameRate(30);
   surface.setSize(windowWidth , windowHeight);
   println((Object[])Serial.list());                                   // * Initialize Serial
-  myPort = new Serial(this, Serial.list()[0], 9600);                //   Communication with
+  myPort = new Serial(this, Serial.list()[1], 9600);                //   Communication with
   myPort.stop();
-  myPort = new Serial(this, Serial.list()[0], 9600);                //   Communication with
-  myPort.bufferUntil(10);                                           //   the Arduino
+  myPort = new Serial(this, Serial.list()[1], 9600);                //   Communication with
+  myPort.bufferUntil('\n');                                           //   the Arduino
   controlP5 = new ControlP5(this);                                  // * Initialize the various
-  SPField = controlP5.addTextfield("Setpoint").setPosition(10,100).setSize(60,20);         //   Buttons, Labels, and
-  InField = controlP5.addTextfield("Input").setPosition(10,150).setSize(60,20);         //   Text Fields we'll be
-  OutField = controlP5.addTextfield("Output").setPosition(10,200).setSize(60,20);         //   using
-  PField = controlP5.addTextfield("Kp (Proportional)").setPosition(10,275).setSize(60,20);          //
-  IField = controlP5.addTextfield("Ki (Integral)").setPosition(10,325).setSize(60,20);          //
-  DField = controlP5.addTextfield("Kd (Derivative)").setPosition(10,375).setSize(60,20);          //
-  AMButton = controlP5.addButton("Toggle_AM",0.0);
-  AMLabel = controlP5.addTextlabel("AM","Manual",12,72);            //
-  AMCurrent = controlP5.addTextlabel("AMCurrent","Manual",80,65);   //
-  controlP5.addButton("Send_To_Arduino",0.0).setPosition(10,475).setSize(120,20);         //
-  SPLabel=controlP5.addTextlabel("SP","3",80,103);                  //
-  InLabel=controlP5.addTextlabel("In","1",80,153);                  //
-  OutLabel=controlP5.addTextlabel("Out","2",80,203);                //
-  PLabel=controlP5.addTextlabel("P","4",80,278);                    //
-  ILabel=controlP5.addTextlabel("I","5",80,328);                    //
-  DLabel=controlP5.addTextlabel("D","6",80,378);                    //
-  DRButton = controlP5.addButton("Toggle_DR",0.0).setSize(60,20).setPosition(10,425);      //
-  DRLabel = controlP5.addTextlabel("DR","Direct",12,447);            //
-  DRCurrent = controlP5.addTextlabel("DRCurrent","Direct",80,440);   //
+
+  //HeadingLabel=controlP5.addTextlabel("HEADING","PID Control",20,20).setHeight(100);
+  //text("PID Control",20,20);
+
+  InTextLabel=controlP5.addTextlabel("INPUT","INPUT",10,58);
+  OutTextLabel=controlP5.addTextlabel("OUTPUT","OUPUT",10,88);
+  TempTextLabel=controlP5.addTextlabel("TEMPERATURE","TEMPERATURE",10,118);
+  DissOxTextLabel=controlP5.addTextlabel("DISSOLVED OXYGEN","DISSOLVED OXYGEN",10,148);
+  OxTextLabel=controlP5.addTextlabel("OXYGEN GAS","OXYGEN GAS",10,178);
+  CO2TextLabel=controlP5.addTextlabel("CARBON DIOXIDE GAS","CARBON-DI-OXIDE GAS",10,208);
+
+  InLabel=controlP5.addTextlabel("INPUT VALUE","0.0",120,58);
+  OutLabel=controlP5.addTextlabel("OUTPUT VALUE","0.0",120,88);
+  TempLabel=controlP5.addTextlabel("TEMPERATURE VALUE","0.0",120,118);
+  DissOxLabel=controlP5.addTextlabel("DISSOLVED OXYGEN VALUE","0.0",120,148);
+  OxLabel=controlP5.addTextlabel("OXYGEN GAS VALUE","0.0",120,178);
+  CO2Label=controlP5.addTextlabel("CARBON DIOXIDE GAS VALUE","0.0",120,208);
+
+  SPLabel=controlP5.addTextlabel("SP","100.00",120,258);                  //
+  PLabel=controlP5.addTextlabel("P","2.00",120,308);                    //
+  ILabel=controlP5.addTextlabel("I","5.00",120,358);                    //
+  DLabel=controlP5.addTextlabel("D","1.00",120,408);                    //
+
+  SPField = controlP5.addTextfield("Setpoint").setPosition(10,255).setSize(80,20);         //   Buttons, Labels, and
+  PField = controlP5.addTextfield("Kp (Proportional)").setPosition(10,305).setSize(80,20);          //
+  IField = controlP5.addTextfield("Ki (Integral)").setPosition(10,355).setSize(80,20);          //
+  DField = controlP5.addTextfield("Kd (Derivative)").setPosition(10,405).setSize(80,20);          //
+  Submit = controlP5.addButton("Submit",0.0).setPosition(20,475).setSize(120,20);         //
 
   AxisFont = loadFont("axis.vlw");
   TitleFont = loadFont("Titles.vlw");
@@ -146,11 +153,11 @@ void drawGraph()
   //GridLines and Titles
   textFont(AxisFont);
   //horizontal grid lines
-  int interval = (int)inputHeight/5;
-  for(int i=0;i<6;i++)
+  int interval = (int)inputHeight/6;
+  for(int i=0;i<7;i++)
   {
-    if(i>0&&i<5) line(ioLeft+1,inputTop+i*interval,ioRight-2,inputTop+i*interval);
-    text(str((InScaleMax-InScaleMin)/5*(float)(5-i)+InScaleMin),ioRight+5,inputTop+i*interval+4);
+    if(i>0&&i<6) line(ioLeft+1,inputTop+i*interval,ioRight-2,inputTop+i*interval);
+    text(str((InScaleMax-InScaleMin)/6*(float)(6-i)+InScaleMin),ioRight+6,inputTop+i*interval+5);
 
   }
   interval = (int)outputHeight/5;
@@ -338,29 +345,10 @@ void drawButtonArea()
   stroke(0);
   fill(100);
   rect(0, 0, ioLeft, windowHeight);
-}
-
-void Toggle_AM() {
-  if(AMLabel.get().getText()=="Manual")
-  {
-    AMLabel.setValue("Automatic");
-  }
-  else
-  {
-    AMLabel.setValue("Manual");
-  }
-}
-
-
-void Toggle_DR() {
-  if(DRLabel.get().getText()=="Direct")
-  {
-    DRLabel.setValue("Reverse");
-  }
-  else
-  {
-    DRLabel.setValue("Direct");
-  }
+  fill(255);
+  textFont(TitleFont);
+  textSize(20);
+  text("PID Control",(int)20,(int)30);
 }
 
 // Sending Floating point values to the arduino
@@ -371,21 +359,15 @@ void Toggle_DR() {
 // - using the java ByteBuffer class, convert
 //   that array to a 24 member byte array
 // - send those bytes to the arduino
-void Send_To_Arduino()
-{
-  float[] toSend = new float[6];
-  println("Getting Data");
+void Submit(){
+  println("Clicked");
+  float[] toSend = new float[4];
   toSend[0] = float(SPField.getText());
-  toSend[1] = float(InField.getText());
-  toSend[2] = float(OutField.getText());
-  toSend[3] = float(PField.getText());
-  toSend[4] = float(IField.getText());
-  toSend[5] = float(DField.getText());
-  Byte a = (AMLabel.get().getText()=="Manual")?(byte)0:(byte)1;
-  Byte d = (DRLabel.get().getText()=="Direct")?(byte)0:(byte)1;
-  myPort.write(a);
-  myPort.write(d);
+  toSend[1] = float(PField.getText());
+  toSend[2] = float(IField.getText());
+  toSend[3] = float(DField.getText());
   myPort.write(floatArrayToByteArray(toSend));
+  println(toSend[0], toSend[1], toSend[2], toSend[3]);
   println("Sent Data");
   justSent=true;
 }
@@ -398,7 +380,7 @@ byte[] floatArrayToByteArray(float[] input)
   byte[] b = new byte[4];
   byte[] out = new byte[len];
   ByteBuffer buf = ByteBuffer.wrap(b);
-  for(int i=0;i<input.length;i++)
+  for(int i=0;i<input.length;i++) 
   {
     buf.position(0);
     buf.putFloat(input[i]);
@@ -408,39 +390,35 @@ byte[] floatArrayToByteArray(float[] input)
 }
 
 
-//take the string the arduino sends us and parse it
 void serialEvent(Serial myPort)
 {
-  //println("Entering Serial Event");
-  String read = myPort.readStringUntil(10);
+  String read = myPort.readStringUntil('\n');
   if(outputFileName!="") output.print(str(millis())+ " "+read);
   String[] s = split(read, " ");
-
-  if (s.length ==9)
+  if (s.length == 12)
   {
-    Setpoint1 = float(s[1]);           // * pull the information
-    Input1 = float(s[2]);              //   we need out of the
-    Output1 = float(s[3]);             //   string and put it
-    SPLabel.setValue(s[1]);           //   where it's needed
-    InLabel.setValue(s[2]);           //
-    OutLabel.setValue(trim(s[3]));    //
-    PLabel.setValue(trim(s[4]));      //
-    ILabel.setValue(trim(s[5]));      //
-    DLabel.setValue(trim(s[6]));      //
-    AMCurrent.setValue(trim(s[7]));   //
-    DRCurrent.setValue(trim(s[8]));
+    Setpoint1 = float(s[2]);           // * pull the information
+    Input1 = float(s[3]);              //   we need out of the
+    Output1 = float(s[4]);             //   string and put it
+    SPLabel.setValue(s[2]);           //   where it's needed
+    InLabel.setValue(s[3]);           //
+    OutLabel.setValue(trim(s[4]));    //
+    PLabel.setValue(trim(s[5]));      //
+    ILabel.setValue(trim(s[6]));      //
+    DLabel.setValue(trim(s[7]));      //
+    TempLabel.setValue(trim(s[8]));      //
+    DissOxLabel.setValue(trim(s[9]));      //
+    OxLabel.setValue(trim(s[10]));      //
+    CO2Label.setValue(trim(s[11]));      //
+    
     if(justSent)                      // * if this is the first read
-    {                                 //   since we sent values to
-      SPField.setText(trim(s[1]));    //   the arduino,  take the
-      InField.setText(trim(s[2]));    //   current values and put
-      OutField.setText(trim(s[3]));   //   them into the input fields
-      PField.setText(trim(s[4]));     //
-      IField.setText(trim(s[5]));     //
-      DField.setText(trim(s[6]));     //
-     // mode = trim(s[7]);              //
-      AMLabel.setValue(trim(s[7]));         //
-      //dr = trim(s[8]);                //
-      DRCurrent.setValue(trim(s[8]));         //
+    {                                 //   since we sent values to 
+      SPField.setText(trim(s[2]));    //   the arduino,  take the
+      //InField.setText(trim(s[2]));    //   current values and put
+      //OutField.setText(trim(s[3]));   //   them into the input fields
+      PField.setText(trim(s[5]));     //
+      IField.setText(trim(s[6]));     //
+      DField.setText(trim(s[7]));     //
       justSent=false;                 //
     }                                 //
 

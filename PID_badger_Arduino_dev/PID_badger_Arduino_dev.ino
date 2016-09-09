@@ -15,6 +15,12 @@
 double Setpoint, Input, Output, SendOutput;
 int inputPin=A0, RelayPin;
 
+double Dissolved_Oxygen = 5.7;
+double Temp = 6.7;
+double Oxygen_Gas = 7.7;
+double CO2 = 8.7;
+int timeFrame = 11;
+
 //Specify the links and initial tuning parameters
 PID myPID(&Input, &Output, &Setpoint,1 ,0 ,0 , DIRECT);
 
@@ -94,8 +100,8 @@ void loop()
 
 
 union {                // This Data structure lets
-  byte asBytes[24];    // us take the byte array
-  float asFloat[6];    // sent from processing and
+  byte asBytes[16];    // us take the byte array
+  float asFloat[4];    // sent from processing and
 }                      // easily convert it to a
 foo;                   // float array
 
@@ -126,40 +132,17 @@ void SerialReceive()
 
   // read the bytes sent from Processing
   int index=0;
-  byte Auto_Man = -1;
-  byte Direct_Reverse = -1;
-  while(Serial.available()&&index<26)
-  {
-    if(index==0) Auto_Man = Serial.read();
-    else if(index==1) Direct_Reverse = Serial.read();
-    else foo.asBytes[index-2] = Serial.read();
+  while(Serial.available()&&index<16){
+    foo.asBytes[index] = Serial.read();
     index++;
   }
-
-  // if the information we got was in the correct format,
-  // read it into the system
-  if(index==26  && (Auto_Man==0 || Auto_Man==1)&& (Direct_Reverse==0 || Direct_Reverse==1))
-  {
-    Setpoint=double(foo.asFloat[0]);
-    //Input=double(foo.asFloat[1]);       // * the user has the ability to send the
-                                          //   value of "Input"  in most cases (as
-                                          //   in this one) this is not needed.
-    if(Auto_Man==0)                       // * only change the output if we are in
-    {                                     //   manual mode.  otherwise we'll get an
-      Output=double(foo.asFloat[2]);      //   output blip, then the controller will
-    }                                     //   overwrite.
-
+  if(index==16){
     double p, i, d;                       // * read in and set the controller tunings
-    p = double(foo.asFloat[3]);           //
-    i = double(foo.asFloat[4]);           //
-    d = double(foo.asFloat[5]);           //
+    Setpoint = double(foo.asFloat[0]);           //
+    p = double(foo.asFloat[1]);           //
+    i = double(foo.asFloat[2]);           //
+    d = double(foo.asFloat[3]);           //
     myPID.SetTunings(p, i, d);            //
-
-    if(Auto_Man==0) myPID.SetMode(MANUAL);// * set the controller mode
-    else myPID.SetMode(AUTOMATIC);             //
-
-    if(Direct_Reverse==0) myPID.SetControllerDirection(DIRECT);// * set the controller Direction
-    else myPID.SetControllerDirection(REVERSE);          //
   }
   Serial.flush();                         // * clear any random data from the serial buffer
 }
@@ -170,6 +153,8 @@ void SerialReceive()
 // floats from processing to here no?
 void SerialSend()
 {
+  Serial.print(timeFrame);
+  Serial.print(" ");
   Serial.print("PID ");
   Serial.print(Setpoint);
   Serial.print(" ");
@@ -183,9 +168,11 @@ void SerialSend()
   Serial.print(" ");
   Serial.print(myPID.GetKd());
   Serial.print(" ");
-  if(myPID.GetMode()==AUTOMATIC) Serial.print("Automatic");
-  else Serial.print("Manual");
+  Serial.print(Temp);
   Serial.print(" ");
-  if(myPID.GetDirection()==DIRECT) Serial.println("Direct");
-  else Serial.println("Reverse");
+  Serial.print(Dissolved_Oxygen);
+  Serial.print(" ");
+  Serial.print(Oxygen_Gas);
+  Serial.print(" ");
+  Serial.println(CO2);
 }
