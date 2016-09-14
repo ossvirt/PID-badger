@@ -74,9 +74,9 @@ Serial myPort;
 
 ControlP5 controlP5;
 controlP5.Button Submit;
-controlP5.Textlabel InLabel, OutLabel, TempLabel, DissOxLabel, OxLabel, CO2Label, SPLabel, PLabel, ILabel, DLabel;
+controlP5.Textlabel InLabel, OutLabel, TempLabel, DissOxLabel, OxLabel, CO2Label, SPLabel, PLabel, ILabel, DLabel, DBLabel;
 controlP5.Textlabel InTextLabel, OutTextLabel, TempTextLabel, DissOxTextLabel, OxTextLabel, CO2TextLabel, HeadingLabel;
-controlP5.Textfield SPField, PField, IField, DField;
+controlP5.Textfield SPField, PField, IField, DField, DBField;
 
 PrintWriter output;
 PFont AxisFont, TitleFont;
@@ -113,12 +113,14 @@ void setup()
   PLabel=controlP5.addTextlabel("P","2.00",120,308);                    //
   ILabel=controlP5.addTextlabel("I","5.00",120,358);                    //
   DLabel=controlP5.addTextlabel("D","1.00",120,408);                    //
-
+  DBLabel=controlP5.addTextlabel("DB","0.00",120,458);                    //
+  
   SPField = controlP5.addTextfield("Setpoint").setPosition(10,255).setSize(80,20);         //   Buttons, Labels, and
   PField = controlP5.addTextfield("Kp (Proportional)").setPosition(10,305).setSize(80,20);          //
   IField = controlP5.addTextfield("Ki (Integral)").setPosition(10,355).setSize(80,20);          //
   DField = controlP5.addTextfield("Kd (Derivative)").setPosition(10,405).setSize(80,20);          //
-  Submit = controlP5.addButton("Submit",0.0).setPosition(20,475).setSize(120,20);         //
+  DBField = controlP5.addTextfield("Deadband").setPosition(10,455).setSize(80,20);          //
+  Submit = controlP5.addButton("Submit",0.0).setPosition(20,525).setSize(120,20);         //
 
   AxisFont = loadFont("axis.vlw");
   TitleFont = loadFont("Titles.vlw");
@@ -361,13 +363,14 @@ void drawButtonArea()
 // - send those bytes to the arduino
 void Submit(){
   println("Clicked");
-  float[] toSend = new float[4];
+  float[] toSend = new float[5];
   toSend[0] = float(SPField.getText());
   toSend[1] = float(PField.getText());
   toSend[2] = float(IField.getText());
   toSend[3] = float(DField.getText());
+  toSend[4] = float(DBField.getText());
   myPort.write(floatArrayToByteArray(toSend));
-  println(toSend[0], toSend[1], toSend[2], toSend[3]);
+  println(toSend[0], toSend[1], toSend[2], toSend[3], toSend[4]);
   println("Sent Data");
   justSent=true;
 }
@@ -397,28 +400,30 @@ void serialEvent(Serial myPort)
   String[] s = split(read, " ");
   if (s.length == 12)
   {
-    Setpoint1 = float(s[2]);           // * pull the information
-    Input1 = float(s[3]);              //   we need out of the
-    Output1 = float(s[4]);             //   string and put it
-    SPLabel.setValue(s[2]);           //   where it's needed
-    InLabel.setValue(s[3]);           //
-    OutLabel.setValue(trim(s[4]));    //
-    PLabel.setValue(trim(s[5]));      //
-    ILabel.setValue(trim(s[6]));      //
-    DLabel.setValue(trim(s[7]));      //
-    TempLabel.setValue(trim(s[8]));      //
-    DissOxLabel.setValue(trim(s[9]));      //
-    OxLabel.setValue(trim(s[10]));      //
-    CO2Label.setValue(trim(s[11]));      //
+    Setpoint1 = float(s[1]);           // * pull the information
+    Input1 = float(s[2]);              //   we need out of the
+    Output1 = float(s[3]);             //   string and put it
+    SPLabel.setValue(s[1]);           //   where it's needed
+    InLabel.setValue(s[2]);           //
+    OutLabel.setValue(trim(s[3]));    //
+    PLabel.setValue(trim(s[4]));      //
+    ILabel.setValue(trim(s[5]));      //
+    DLabel.setValue(trim(s[6]));      //
+    TempLabel.setValue(trim(s[7]));      //
+    DissOxLabel.setValue(trim(s[8]));      //
+    OxLabel.setValue(trim(s[9]));      //
+    CO2Label.setValue(trim(s[10]));      //
+    DBLabel.setValue(trim(s[11]));      //
     
     if(justSent)                      // * if this is the first read
     {                                 //   since we sent values to 
-      SPField.setText(trim(s[2]));    //   the arduino,  take the
+      SPField.setText(trim(s[1]));    //   the arduino,  take the
       //InField.setText(trim(s[2]));    //   current values and put
       //OutField.setText(trim(s[3]));   //   them into the input fields
-      PField.setText(trim(s[5]));     //
-      IField.setText(trim(s[6]));     //
-      DField.setText(trim(s[7]));     //
+      PField.setText(trim(s[4]));     //
+      IField.setText(trim(s[5]));     //
+      DField.setText(trim(s[6]));     //
+      DBField.setText(trim(s[11]));     //
       justSent=false;                 //
     }                                 //
 

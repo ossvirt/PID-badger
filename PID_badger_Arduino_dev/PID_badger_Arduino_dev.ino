@@ -12,7 +12,7 @@
 #define pHdownPin 3
 
 //Define Variables we'll be connecting to
-double Setpoint, Input, Output, SendOutput, InputSend, SetpointSend;
+double Setpoint, Input, Output, SendOutput, InputSend, SetpointSend, Deadband;
 int inputPin=A0, RelayPin;
 
 double Dissolved_Oxygen = 5.7;
@@ -103,8 +103,8 @@ void loop()
 
 
 union {                // This Data structure lets
-  byte asBytes[16];    // us take the byte array
-  float asFloat[4];    // sent from processing and
+  byte asBytes[20];    // us take the byte array
+  float asFloat[5];    // sent from processing and
 }                      // easily convert it to a
 foo;                   // float array
 
@@ -135,17 +135,18 @@ void SerialReceive()
 
   // read the bytes sent from Processing
   int index=0;
-  while(Serial.available()&&index<16){
+  while(Serial.available()&&index<20){
     foo.asBytes[index] = Serial.read();
     index++;
   }
-  if(index==16){
+  if(index==20){
     double p, i, d;                       // * read in and set the controller tunings
     SetpointSend = double(foo.asFloat[0]);           //
     Setpoint = (SetpointSend - 4)*170.66;
     p = double(foo.asFloat[1]);           //
     i = double(foo.asFloat[2]);           //
     d = double(foo.asFloat[3]);           //
+    Deadband = double(foo.asFloat[4]);     //
     myPID.SetTunings(p, i, d);            //
   }
   Serial.flush();                         // * clear any random data from the serial buffer
@@ -157,8 +158,6 @@ void SerialReceive()
 // floats from processing to here no?
 void SerialSend()
 {
-  Serial.print(timeFrame);
-  Serial.print(" ");
   Serial.print("PID ");
   Serial.print(SetpointSend);
   Serial.print(" ");
@@ -178,5 +177,7 @@ void SerialSend()
   Serial.print(" ");
   Serial.print(Oxygen_Gas);
   Serial.print(" ");
-  Serial.println(CO2);
+  Serial.print(CO2);
+  Serial.print(" ");
+  Serial.println(Deadband);
 }
