@@ -37,6 +37,7 @@ PID::PID(double* Input, double* Output, double* Setpoint,
     lastTime = millis()-SampleTime;
 }
 
+int deadband = 40;
 
 /* Compute() **********************************************************************
  *     This, as they say, is where the magic happens.  this function should be called
@@ -54,6 +55,7 @@ bool PID::Compute()
       /*Compute all the working error variables*/
 	  double input = *myInput;
       double error = *mySetpoint - input;
+      if (abs(error) < deadband) error = 0; //deadband code added
       ITerm+= (ki * error);
       if(ITerm > outMax) ITerm= outMax;
       else if(ITerm < outMin) ITerm= outMin;
